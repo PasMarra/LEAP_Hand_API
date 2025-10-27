@@ -2,7 +2,7 @@ import numpy as np
 
 from leap_hand_utils.dynamixel_client import *
 import leap_hand_utils.leap_hand_utils as lhu
-import time
+import timeit
 #######################################################
 """This can control and query the LEAP Hand
 
@@ -92,11 +92,26 @@ class LeapNode:
 #init the node
 def main(**kwargs):
     leap_hand = LeapNode()
+
+    sleep_time = 0.05
+    np.set_printoptions(linewidth=np.inf)
+
     while True:
         #Set to an open pose and read the joint angles 33hz
+        tic = timeit.default_timer()
         leap_hand.set_allegro(np.zeros(16))
-        print("Position: " + str(leap_hand.read_pos()))
-        time.sleep(0.03)
+        toc = timeit.default_timer()
+        temp = leap_hand.pos_vel_eff_srv()
+        tac = timeit.default_timer()
+        pos = temp[0]
+        vel = temp[1]
+        cur = temp[2]
+        print("------")
+        print("Sleep time: " + str(sleep_time) + "\tSet Time: " + str(toc - tic) + "\tGet Time: " + str(tac - toc))
+        print("Pos: " + str(pos))
+        print("Vel: " + str(vel))
+        print("Cur: " + str(cur))
+        time.sleep(sleep_time)
 
 if __name__ == "__main__":
     main()
