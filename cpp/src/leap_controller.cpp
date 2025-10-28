@@ -6,7 +6,7 @@ LeapController::LeapController(const std::string &usb_port) :
 	curr_pos{ allegro_to_LEAPhand(Eigen::VectorXd::Zero(16)) },
 	pos{ allegro_to_LEAPhand(Eigen::VectorXd::Zero(16)) },
 	motors{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	dxl_client{motors, usb_port, 1000000, false}
+	dxl_client{motors, usb_port, 4000000, false}
 {
 
 }
