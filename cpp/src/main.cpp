@@ -32,7 +32,7 @@ int main()
     // Register signals 
     signal(SIGINT, keyboard_interrupt);
 
-    LeapController leap_hand { "/dev/ttyUSB1" };
+    LeapController leap_hand { "/dev/ttyLEAP" };
     leap_hand.connect();
 
     while (1) {

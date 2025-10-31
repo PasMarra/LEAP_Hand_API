@@ -6,11 +6,12 @@
 
 ### Software Setup
 - See these folders for setup details:  
-  - [Python API](https://github.com/leap-hand/LEAP_Hand_API/tree/main/python) 
+  - [Python API](https://github.com/leap-hand/LEAP_Hand_API/tree/main/python)
   - [C++](https://github.com/leap-hand/LEAP_Hand_API/tree/main/cpp)
-  - [ROS API](https://github.com/leap-hand/LEAP_Hand_API/tree/main/ros_module)  
-  - [ROS2 API](https://github.com/leap-hand/LEAP_Hand_API/tree/main/ros2_module)  
+  - [ROS API](https://github.com/leap-hand/LEAP_Hand_API/tree/main/ros_module)
+  - [ROS2 API](https://github.com/leap-hand/LEAP_Hand_API/tree/main/ros2_module)
   - [Useful Tools](https://github.com/leap-hand/LEAP_Hand_API/tree/main/useful_tools)
+  - [udevRule](./udevRule/)
 
 ---
 
@@ -25,7 +26,7 @@
 - Official support: **Python** and **C++** and **ROS/ROS2**. 
   Other languages can use the [Dynamixel SDK](https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/overview/).
 - To improve latency on Ubuntu:  
-  - [Adjust USB Latency Settings](https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_wizard2/)  
+  - [Adjust USB Latency Settings](https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_wizard2/), see also: [udevRule/README.md](./udevRule/README.md)
   - Tune the [Dynamixel Python SDK](https://github.com/ROBOTIS-GIT/DynamixelSDK/issues/288)  
   - Set *Return Delay Time* (Control Table Register 9) from 250 µs to **0 µs**.
 - If you are using the full hand, you can raise the current limit from 300 mA to 550 mA in the API for increased strength!
