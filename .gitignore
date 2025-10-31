@@ -1,6 +1,7 @@
 test_env
 .vscode
 cpp/build
+cpp/install
 cpp/dynamixel_sdk/build
 # Byte-compiled / optimized / DLL files
 __pycache__/

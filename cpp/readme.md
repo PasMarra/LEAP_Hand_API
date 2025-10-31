@@ -8,9 +8,9 @@ In order to use the LEAP Hand with C++ sdk please read the following information
 ```bash
   cd ~/LEAP_Hand_API/cpp
   mkdir build && cd build
-  cmake . # optional -DPLATEFORM={linux_sbc, linux32, linux64, mac}
-  make 
-  sudo make install
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=</where/to/install>
+  cmake --build . --target run_make_dynamixel_sdk -j$(nproc)
+  cmake --build . --target test_leap_hand -j$(nproc)
 ```
 
 #### Usage 
@@ -18,9 +18,6 @@ In order to use the LEAP Hand with C++ sdk please read the following information
 Please execute the following commands to run the test.
 
 ```bash
-cd ~/LEAP_Hand_API/cpp/build/src
+cd ~/LEAP_Hand_API/cpp/build/
 ./test_leap_hand
 ```
-
-
-Thank you to Albert Paik (apaik458) at the University of Auckland for the first version!
