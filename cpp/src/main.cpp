@@ -1,5 +1,7 @@
 #include <iostream>
 #include <signal.h>
+#include <Eigen/Dense>
+#include <chrono>
 
 #include <leap_hand_utils/leap_controller.h>
 
@@ -24,10 +26,13 @@ void keyboard_interrupt(int sig) {
 
 int main()
 {
+
+    double sleep_time = 0.05; // 50 ms sleep time
+
     // Register signals 
     signal(SIGINT, keyboard_interrupt);
 
-    LeapController leap_hand { "/dev/ttyUSB0" };
+    LeapController leap_hand { "/dev/ttyUSB1" };
     leap_hand.connect();
 
     while (1) {
@@ -35,8 +40,18 @@ int main()
             printf("\nShutting down\n");
             break;
         }
-
+        
+        auto tic = std::chrono::high_resolution_clock::now();
         leap_hand.set_allegro(Eigen::MatrixXd::Zero(16, 1));
-        std::cout << "Position: " << leap_hand.read_pos() << '\n';
+        auto toc = std::chrono::high_resolution_clock::now();
+        std::vector<Eigen::MatrixXd> pos_vel_cur = leap_hand.read_pos_vel_cur();
+        auto tac = std::chrono::high_resolution_clock::now();
+        std::cout << "------\n";
+        std::cout << "Sleep time: " << sleep_time << "\tSet Time: " << std::chrono::duration<double>(toc - tic).count() << "\tGet Time: " << std::chrono::duration<double>(tac - toc).count() << '\n';
+        std::cout << "Position: " << pos_vel_cur[0].transpose() << '\n';
+        std::cout << "Velocity: " << pos_vel_cur[1].transpose() << '\n';
+        std::cout << "Current: " << pos_vel_cur[2].transpose() << '\n';
+
+        sleep(sleep_time);
     }
 }
