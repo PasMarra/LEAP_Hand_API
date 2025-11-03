@@ -43,6 +43,13 @@ add_dependencies(dynamixel_client run_make_dynamixel_sdk)
 ## Ensure linker and includes look into the CMake install prefix where the SDK Makefile installs
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
+# Put the built library under the lib/ subdirectory of the build tree
+set_target_properties(dynamixel_client PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib"
+)
+
 target_link_libraries(dynamixel_client PUBLIC
   dxl_x64_cpp
   Eigen3::Eigen
