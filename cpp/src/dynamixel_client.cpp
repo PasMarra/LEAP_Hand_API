@@ -7,6 +7,8 @@
 #include <chrono>
 #include <thread>
 
+#include <cstdint>
+
 #include <leap_hand_utils/dynamixel_client.h>
 
 
@@ -21,23 +23,37 @@ void dynamixel_cleanup_handler(std::set<DynamixelClient*> open_clients) {
     }
 }
 
-int signed_to_unsigned(int value, int size) {
-    /* Converts the given value to its unsigned representation */
-    if (value < 0) {
-        int bit_size = 8 * size;
-        int max_value = (1 << bit_size) - 1;
-        value += max_value;
+uint64_t signed_to_unsigned(int64_t value, int size_bytes) {
+    uint64_t bit_size = 8ULL * static_cast<uint64_t>(size_bytes);
+    // avoid UB for shifts; bit_size <= 64 expected
+    if (bit_size >= 64) {
+        uint64_t mod = 0; // 2^64 would overflow uint64_t (wraps to 0) — callers shouldn't request >8 bytes
+        return static_cast<uint64_t>(value);
     }
-    return value;
+    uint64_t mod = 1ULL << bit_size;
+    if (value < 0) {
+        return mod + static_cast<int64_t>(value);
+    }
+    return static_cast<uint64_t>(value);
 }
 
-int unsigned_to_signed(int value, int size) {
-    /* Converts the given value from its unsigned representation */
-    int bit_size = 8 * size;
-    if ((value & (1 << (bit_size - 1))) != 0) {
-        value = -((1 << bit_size) - value);
+int64_t unsigned_to_signed(uint64_t value, int size_bytes) {
+    uint64_t bit_size = 8ULL * static_cast<uint64_t>(size_bytes);
+    if (bit_size >= 64) {
+        // for 64 bits signed interpretation, if msb set, subtract 2^64
+        uint64_t sign_mask = 1ULL << 63;
+        uint64_t mod = 0; // 2^64 wraps to 0; treat specially
+        if (value & sign_mask) {
+            return static_cast<int64_t>(value); // best-effort; large negative cannot be represented cleanly here
+        }
+        return static_cast<int64_t>(value);
     }
-    return value;
+    uint64_t sign_mask = 1ULL << (bit_size - 1);
+    uint64_t mod = 1ULL << bit_size;
+    if (value & sign_mask) {
+        return static_cast<int64_t>(value - mod);
+    }
+    return static_cast<int64_t>(value);
 }
 
 
@@ -548,15 +564,15 @@ void DynamixelPosVelCurReader::_initialize_data() {
 
 void DynamixelPosVelCurReader::_update_data(int index, int motor_id) {
     /* Updates the data index for the given motor ID */
-    uint32_t cur {operation.getData(motor_id, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT)};
-    uint32_t vel {operation.getData(motor_id, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)};
-    uint32_t pos {operation.getData(motor_id, ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION)};
-    cur = unsigned_to_signed(cur, 2);
-    vel = unsigned_to_signed(vel, 4);
-    pos = unsigned_to_signed(pos, 4);
-    _pos_data(index) = float(pos) * pos_scale;
-    _vel_data(index) = float(vel) * vel_scale;
-    _cur_data(index) = float(cur) * cur_scale;
+    uint64_t raw_cur = operation.getData(motor_id, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT);
+    uint64_t raw_vel = operation.getData(motor_id, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY);
+    uint64_t raw_pos = operation.getData(motor_id, ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION);
+    int64_t cur = unsigned_to_signed(raw_cur, 2);
+    int64_t vel = unsigned_to_signed(raw_vel, 4);
+    int64_t pos = unsigned_to_signed(raw_pos, 4);
+    _pos_data(index) = static_cast<float>(pos) * pos_scale;
+    _vel_data(index) = static_cast<float>(vel) * vel_scale;
+    _cur_data(index) = static_cast<float>(cur) * cur_scale;
 }
 
 std::vector<Eigen::MatrixXd> DynamixelPosVelCurReader::_get_data() {
@@ -632,12 +648,12 @@ void DynamixelPosVelReader::_initialize_data() {
 
 void DynamixelPosVelReader::_update_data(int index, int motor_id) {
     /* Updates the data index for the given motor ID */
-    uint32_t vel {operation.getData(motor_id, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)};
-    uint32_t pos {operation.getData(motor_id, ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION)};
-    vel = unsigned_to_signed(vel, 4);
-    pos = unsigned_to_signed(pos, 4);
-    _pos_data(index) = float(pos) * pos_scale;
-    _vel_data(index) = float(vel) * vel_scale;
+    uint64_t raw_vel = operation.getData(motor_id, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY);
+    uint64_t raw_pos = operation.getData(motor_id, ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION);
+    int64_t vel = unsigned_to_signed(raw_vel, 4);
+    int64_t pos = unsigned_to_signed(raw_pos, 4);
+    _pos_data(index) = static_cast<float>(pos) * pos_scale;
+    _vel_data(index) = static_cast<float>(vel) * vel_scale;
 }
 
 std::vector<Eigen::MatrixXd> DynamixelPosVelReader::_get_data() {
@@ -712,9 +728,9 @@ void DynamixelPosReader::_initialize_data() {
 
 void DynamixelPosReader::_update_data(int index, int motor_id) {
     /* Updates the data index for the given motor ID */
-    uint32_t pos {operation.getData(motor_id, ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION)};
-    pos = unsigned_to_signed(pos, 4);
-    _pos_data(index) = float(pos) * pos_scale;
+    uint64_t raw_pos = operation.getData(motor_id, ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION);
+    int64_t pos = unsigned_to_signed(raw_pos, 4);
+    _pos_data(index) = static_cast<float>(pos) * pos_scale;
 }
 
 Eigen::MatrixXd DynamixelPosReader::_get_data() {
@@ -789,9 +805,9 @@ void DynamixelVelReader::_initialize_data() {
 
 void DynamixelVelReader::_update_data(int index, int motor_id) {
     /* Updates the data index for the given motor ID */
-    uint32_t vel {operation.getData(motor_id, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY)};
-    vel = unsigned_to_signed(vel, 4);
-    _vel_data(index) = float(vel) * vel_scale;
+    uint64_t raw_vel = operation.getData(motor_id, ADDR_PRESENT_VELOCITY, LEN_PRESENT_VELOCITY);
+    int64_t vel = unsigned_to_signed(raw_vel, 4);
+    _vel_data(index) = static_cast<float>(vel) * vel_scale;
 }
 
 Eigen::MatrixXd DynamixelVelReader::_get_data() {
@@ -866,9 +882,9 @@ void DynamixelCurReader::_initialize_data() {
 
 void DynamixelCurReader::_update_data(int index, int motor_id) {
     /* Updates the data index for the given motor ID */
-    uint32_t cur {operation.getData(motor_id, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT)};
-    cur = unsigned_to_signed(cur, 2);
-    _cur_data(index) = float(cur) * cur_scale;
+    uint64_t raw_cur = operation.getData(motor_id, ADDR_PRESENT_CURRENT, LEN_PRESENT_CURRENT);
+    int64_t cur = unsigned_to_signed(raw_cur, 2);
+    _cur_data(index) = static_cast<float>(cur) * cur_scale;
 }
 
 Eigen::MatrixXd DynamixelCurReader::_get_data() {
