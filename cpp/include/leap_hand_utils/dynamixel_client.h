@@ -37,8 +37,8 @@
 
 class DynamixelClient;
 void dynamixel_cleanup_handler(std::set<DynamixelClient> open_clients);
-int signed_to_unsigned(int value, int size);
-int unsigned_to_signed(int value, int size);
+uint64_t signed_to_unsigned(int64_t value, int size_bytes);
+int64_t unsigned_to_signed(uint64_t value, int size_bytes);
 
 
 class DynamixelPosVelCurReader;
